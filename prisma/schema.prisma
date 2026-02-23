@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  url         String   @unique
+  source      String
+  publishedAt DateTime
+  description String?
+  imageUrl    String?
+  visitCount  Int      @default(0)
+  topics      String   // JSON array stored as string
+  createdAt   DateTime @default(now())
+
+  @@index([publishedAt])
+  @@index([topics])
+}
+
+model Colleague {
+  id     String @id @default(cuid())
+  name   String @unique
+  topics String // JSON array stored as string
+}
+
+model GlobalSetting {
+  key   String @id
+  value String // JSON string
+}
+
+model ArticleGroup {
+  id                  String   @id @default(cuid())
+  canonicalArticleId  String
+  duplicateArticleIds String   // JSON array stored as string
+  createdAt           DateTime @default(now())
+
+  @@index([canonicalArticleId])
+}
