@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import NewsFeed from '@/components/NewsFeed';
@@ -32,17 +32,7 @@ export default function ColleaguePage({ params }: PageProps) {
     const [isLoading, setIsLoading] = useState(true);
 
     // Load colleague preferences and articles
-    useEffect(() => {
-        loadPreferences();
-    }, [colleague]);
-
-    useEffect(() => {
-        if (selectedTopics.length > 0) {
-            loadArticles();
-        }
-    }, [selectedTopics]);
-
-    const loadPreferences = async () => {
+    const loadPreferences = useCallback(async () => {
         try {
             const res = await fetch(`/api/preferences?name=${colleague}`);
             const data = await res.json();
@@ -56,9 +46,9 @@ export default function ColleaguePage({ params }: PageProps) {
             console.error('Failed to load preferences:', error);
             setSelectedTopics([{ name: 'autonomous-driving', active: true, isCompany: false }]);
         }
-    };
+    }, [colleague]);
 
-    const loadArticles = async () => {
+    const loadArticles = useCallback(async () => {
         setIsLoading(true);
         try {
             // Flatten topic names for the API
@@ -73,7 +63,17 @@ export default function ColleaguePage({ params }: PageProps) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedTopics]);
+
+    useEffect(() => {
+        loadPreferences();
+    }, [loadPreferences]);
+
+    useEffect(() => {
+        if (selectedTopics.length > 0) {
+            loadArticles();
+        }
+    }, [selectedTopics, loadArticles]);
 
     const handleTopicsChange = async (newTopics: (string | ManagedTopic)[]) => {
         const normalized = newTopics.map(t => normalizeTopic(t));
@@ -100,7 +100,7 @@ export default function ColleaguePage({ params }: PageProps) {
                     <div className="mb-8 animate-reveal flex items-end justify-between flex-wrap gap-4">
                         <div>
                             <h1 className="text-5xl md:text-6xl font-black tracking-tighter capitalize mb-4">
-                                {colleague}'s <span className="gradient-text">Feed</span>
+                                {colleague}&apos;s <span className="gradient-text">Feed</span>
                             </h1>
                             <p className="text-foreground/40 font-medium tracking-wide uppercase text-xs">
                                 Personalized feed based on {selectedTopics.length} tracked targets

@@ -108,8 +108,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                             ) : (
                                 <div className="bg-primary/5 border border-primary/20 rounded-xl p-8 text-center">
                                     <p className="text-lg mb-6">
-                                        We couldn't extract the full content of this article.
-                                        You can read it directly on the publisher's website.
+                                        We couldn&apos;t extract the full content of this article.
+                                        You can read it directly on the publisher&apos;s website.
                                     </p>
                                     <a
                                         href={article.url}

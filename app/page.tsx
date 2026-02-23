@@ -64,7 +64,7 @@ export default async function HomePage() {
                     <div className="max-w-7xl mx-auto text-center py-32 glass rounded-[3rem]">
                         <div className="text-6xl mb-6 animate-bounce">📭</div>
                         <h2 className="text-3xl font-bold mb-4">No articles found</h2>
-                        <p className="text-foreground/40 max-w-md mx-auto mb-8">It looks like our robotaxis haven't delivered any news yet. Try updating your core topics in the Admin panel.</p>
+                        <p className="text-foreground/40 max-w-md mx-auto mb-8">It looks like our robotaxis haven&apos;t delivered any news yet. Try updating your core topics in the Admin panel.</p>
                         <Link href="/admin" className="btn btn-primary">
                             Manage Topics
                         </Link>

@@ -65,11 +65,11 @@ export default function ColleagueSavedPage() {
                                     href={`/${colleague}`}
                                     className="text-foreground/30 hover:text-foreground/60 transition-colors text-sm font-semibold capitalize"
                                 >
-                                    ← {colleague}'s Feed
+                                    ← {colleague}&apos;s Feed
                                 </Link>
                             </div>
                             <h1 className="text-5xl md:text-6xl font-black mb-3 tracking-tighter capitalize">
-                                {colleague}'s <span className="gradient-text">Saved</span>
+                                {colleague}&apos;s <span className="gradient-text">Saved</span>
                             </h1>
                             <p className="text-foreground/40 font-medium tracking-wide uppercase text-xs">
                                 {bookmarkCount} bookmarked article{bookmarkCount !== 1 ? 's' : ''}
