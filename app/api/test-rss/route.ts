@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { fetchAllArticles } from '@/lib/rss-fetcher';
 
 export async function GET() {
