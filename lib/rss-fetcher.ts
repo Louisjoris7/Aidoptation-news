@@ -121,7 +121,24 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
             if (publishedAt < cutoffDate) continue;
 
             // Classify topics
-            const classifiedTopics = classifyTopics(title, description, managedTopicNames);
+            let classifiedTopics = classifyTopics(title, description, managedTopicNames);
+
+            // SPECIALIZED ISOLATION: 
+            // If the source is specialized (F1, Cinema), we ONLY want to add broader topics (tech, industry)
+            // if the article ALSO matches "autonomous" keywords. Otherwise, specialized articles
+            // "leak" into the home page because they mention "tech" or "software".
+            if (source.isSpecialized) {
+                const isAboutAutonomy = classifiedTopics.includes('autonomous-driving') ||
+                    classifiedTopics.includes('tesla') ||
+                    classifiedTopics.includes('waymo');
+
+                if (!isAboutAutonomy) {
+                    // Strip generic topics that would pull it to the Home page
+                    classifiedTopics = classifiedTopics.filter(t =>
+                        t !== 'tech' && t !== 'automotive' && t !== 'industry' && t !== 'business'
+                    );
+                }
+            }
 
             // Formula 1 Synonym matching
             if (managedTopicNames.some(t => t.toLowerCase().includes('formula-1') || t.toLowerCase() === 'f1')) {

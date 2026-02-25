@@ -6,6 +6,7 @@ export interface RSSSource {
     priority: number; // Higher = better source for deduplication
     defaultTopics: string[];
     isDynamic?: boolean; // If true, URL contains {query} placeholder
+    isSpecialized?: boolean; // If true, won't show on general feed by default
 }
 
 export const RSS_SOURCES: RSSSource[] = [
@@ -90,18 +91,21 @@ export const RSS_SOURCES: RSSSource[] = [
         url: "https://www.formula1.com/en/latest/all.xml",
         priority: 9,
         defaultTopics: ["formula-1"],
+        isSpecialized: true,
     },
     {
         name: "Autosport F1",
         url: "https://www.autosport.com/rss/f1news.xml",
         priority: 8,
         defaultTopics: ["formula-1"],
+        isSpecialized: true,
     },
     {
         name: "Motorsport F1",
         url: "https://www.motorsport.com/rss/f1/news/",
         priority: 8,
         defaultTopics: ["formula-1"],
+        isSpecialized: true,
     },
 
     // 🍿 Cinema & Entertainment Specialized
@@ -110,24 +114,27 @@ export const RSS_SOURCES: RSSSource[] = [
         url: "https://variety.com/v/film/feed/",
         priority: 8,
         defaultTopics: ["cinema"],
+        isSpecialized: true,
     },
     {
         name: "Hollywood Reporter",
         url: "https://www.hollywoodreporter.com/feed/",
         priority: 9,
         defaultTopics: ["cinema"],
+        isSpecialized: true,
     },
     {
         name: "Deadline Entertainment",
         url: "https://deadline.com/feed/",
         priority: 8,
         defaultTopics: ["cinema"],
+        isSpecialized: true,
     },
 ];
 
 // Curated source names for the general feed
 export const CURATED_SOURCE_NAMES = RSS_SOURCES
-    .filter(s => !s.isDynamic)
+    .filter(s => !s.isDynamic && !s.isSpecialized)
     .map(s => s.name);
 
 // Core topics for the general feed
