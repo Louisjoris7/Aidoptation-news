@@ -16,7 +16,7 @@
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@prisma/client": "^5.11.0",
-    "jsdom": "^28.1.0",
+    "jsdom": "^22.1.0",
     "next": "^14.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
