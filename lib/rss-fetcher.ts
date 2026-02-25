@@ -3,6 +3,9 @@ import { RSS_SOURCES, TOPIC_KEYWORDS } from './sources';
 import { prisma } from './prisma';
 import { normalizeTopic } from './topics';
 import { JSDOM } from 'jsdom';
+import { getHeroImage } from './article-extractor';
+
+const REAL_BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
 
 const parser = new Parser({
     timeout: 10000,
@@ -173,26 +176,22 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
         // 5. Deep Extraction Pass: Hunt for missing images in parallel
         const articlesMissingImages = articles.filter(a => !a.imageUrl);
         if (articlesMissingImages.length > 0) {
-            console.log(`🕵️ [Hero Hunt] Searching for ${articlesMissingImages.length} missing images for ${source.name}...`);
-
-            // Limit to top 5 most recent to avoid hammering the source
-            const targets = articlesMissingImages.slice(0, 5);
+            // Increase to top 10 for better variety
+            const targets = articlesMissingImages.slice(0, 10);
+            console.log(`🕵️ [Hero Hunt] Searching for up to ${targets.length} images for "${source.name}"...`);
 
             await Promise.allSettled(targets.map(async (article) => {
                 try {
                     const res = await fetch(article.url, {
-                        headers: { 'User-Agent': 'Mozilla/5.0' },
-                        signal: AbortSignal.timeout(3000) // 3s timeout
+                        headers: { 'User-Agent': REAL_BROWSER_UA },
+                        signal: AbortSignal.timeout(5000) // 5s timeout (some sites are slow)
                     });
                     if (res.ok) {
                         const html = await res.text();
-                        const dom = new JSDOM(html);
-                        const doc = dom.window.document;
-                        const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
-                            doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+                        const heroImage = await getHeroImage(html, article.url);
 
-                        if (ogImage && !isJunkImage(ogImage)) {
-                            article.imageUrl = ogImage.startsWith('//') ? 'https:' + ogImage : ogImage;
+                        if (heroImage && !isJunkImage(heroImage)) {
+                            article.imageUrl = heroImage;
                         }
                     }
                 } catch (e) {

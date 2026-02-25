@@ -19,17 +19,28 @@ export async function getHeroImage(html: string, url: string): Promise<string | 
         const dom = new JSDOM(html, { url });
         const doc = dom.window.document;
 
-        // 1. Check Open Graph Image (Standard)
-        const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
-        if (ogImage) return ogImage;
+        // 1. Check Meta-tag priority list
+        const selectors = [
+            'meta[property="og:image"]',
+            'meta[name="twitter:image"]',
+            'meta[itemprop="image"]',
+            'link[rel="image_src"]',
+            'link[rel="preload"][as="image"]'
+        ];
 
-        // 2. Check Twitter Card Image
-        const twitterImage = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
-        if (twitterImage) return twitterImage;
+        for (const selector of selectors) {
+            const el = doc.querySelector(selector);
+            let content = el?.getAttribute('content') || el?.getAttribute('href');
 
-        // 3. Check generic image_src
-        const imageSrc = doc.querySelector('link[rel="image_src"]')?.getAttribute('href');
-        if (imageSrc) return imageSrc;
+            if (content) {
+                // Resolve relative URLs (e.g. /img/hero.jpg -> https://example.com/img/hero.jpg)
+                try {
+                    return new URL(content, url).href;
+                } catch (e) {
+                    return content;
+                }
+            }
+        }
 
         return null;
     } catch (error) {
@@ -42,10 +53,11 @@ export async function getHeroImage(html: string, url: string): Promise<string | 
  * Fetches and extracts the main content from a URL
  */
 export async function extractArticle(url: string): Promise<ExtractedArticle | null> {
+    const REAL_BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'User-Agent': REAL_BROWSER_UA,
             },
             next: { revalidate: 3600 } // Cache for 1 hour
         });
