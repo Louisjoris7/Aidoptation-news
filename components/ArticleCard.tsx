@@ -55,9 +55,6 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                 )}
                 {/* Visual Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-60 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                    <div className="btn btn-primary text-xs scale-90 -translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                        Read Full Story
-                    </div>
                 </div>
             </div>
 
