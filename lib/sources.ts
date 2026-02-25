@@ -83,6 +83,46 @@ export const RSS_SOURCES: RSSSource[] = [
         defaultTopics: [],
         isDynamic: true,
     },
+
+    // 🏎️ Formula 1 Specialized
+    {
+        name: "F1 Offical News",
+        url: "https://www.formula1.com/en/latest/all.xml",
+        priority: 9,
+        defaultTopics: ["formula-1"],
+    },
+    {
+        name: "Autosport F1",
+        url: "https://www.autosport.com/rss/f1news.xml",
+        priority: 8,
+        defaultTopics: ["formula-1"],
+    },
+    {
+        name: "Motorsport F1",
+        url: "https://www.motorsport.com/rss/f1/news/",
+        priority: 8,
+        defaultTopics: ["formula-1"],
+    },
+
+    // 🍿 Cinema & Entertainment Specialized
+    {
+        name: "Variety Film",
+        url: "https://variety.com/v/film/feed/",
+        priority: 8,
+        defaultTopics: ["cinema"],
+    },
+    {
+        name: "Hollywood Reporter",
+        url: "https://www.hollywoodreporter.com/feed/",
+        priority: 9,
+        defaultTopics: ["cinema"],
+    },
+    {
+        name: "Deadline Entertainment",
+        url: "https://deadline.com/feed/",
+        priority: 8,
+        defaultTopics: ["cinema"],
+    },
 ];
 
 // Curated source names for the general feed
@@ -115,4 +155,10 @@ export const TOPIC_KEYWORDS: Record<string, string[]> = {
     "suppliers": ["supplier", "bosch", "continental", "denso", "tier 1", "tier 2"],
     "tech": ["technology", "software", "ai", "artificial intelligence", "machine learning"],
     "automotive": ["automotive", "car", "vehicle", "oem"],
+
+    // 🏎️ Formula 1 & Motorsports
+    "formula-1": ["formula 1", "f1", "grand prix", "fia", "max verstappen", "lewis hamilton", "ferrari", "mercedes f1", "red bull racing"],
+
+    // 🍿 Cinema & Entertainment
+    "cinema": ["cinema", "movie", "film", "hollywood", "box office", "director", "casting news", "oscars", "academy awards"]
 };
