@@ -111,50 +111,48 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
             const description = item.contentSnippet || item.content || null;
             const publishedAt = item.pubDate ? new Date(item.pubDate) : new Date();
 
-            // Skip very old articles (older than 7 days)
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            if (publishedAt < sevenDaysAgo) continue;
+            // Skip very old articles (older than 14 days - relaxed to catch more niche news)
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 14);
+            if (publishedAt < cutoffDate) continue;
 
             // Classify topics
             const classifiedTopics = classifyTopics(title, description, managedTopicNames);
+
+            // Formula 1 Synonym matching
+            if (managedTopicNames.some(t => t.toLowerCase().includes('formula-1') || t.toLowerCase() === 'f1')) {
+                const text = `${title} ${description || ''}`.toLowerCase();
+                if (text.includes('formula 1') || text.includes(' f1 ')) {
+                    if (!classifiedTopics.includes('formula-1')) classifiedTopics.push('formula-1');
+                }
+            }
+
             const topics = [...source.defaultTopics, ...classifiedTopics];
 
             // Extract image URL - more robust logic
             let imageUrl: string | null = null;
 
-            // 1. Check Media Content (often used by major publishers)
-            if (item['media:content'] && item['media:content'].$) {
-                imageUrl = item['media:content'].$.url;
-            }
-            // 2. Check Enclosures
-            else if (item.enclosure && item.enclosure.url) {
-                imageUrl = item.enclosure.url;
-            }
-            // 3. Check Media Thumbnail
-            else if (item['media:thumbnail'] && item['media:thumbnail'].$) {
-                imageUrl = item['media:thumbnail'].$.url;
-            }
-            // 4. Fallback to scraping first image from content
+            // 0. Preliminary Media Content check
+            if (item.enclosure?.url) imageUrl = item.enclosure.url;
+            else if (item['media:content']?.$?.url) imageUrl = item['media:content'].$.url;
+            else if (item['media:thumbnail']?.$?.url) imageUrl = item['media:thumbnail'].$.url;
+
+            // 1. Fallback to scraping image from content/description (Common in Google News RSS)
             if (!imageUrl || isJunkImage(imageUrl)) {
                 const searchContent = (item['content:encoded'] || item.content || item.description || "");
-                const imgMatch = searchContent.match(/<img[^>]+src=["']([^"'>]+)["']/i);
-                if (imgMatch) {
-                    const candidateUrl = imgMatch[1];
-                    if (!isJunkImage(candidateUrl)) {
-                        imageUrl = candidateUrl;
-                    } else {
-                        imageUrl = null; // Don't use the junk image we just found
-                    }
+                // Google News often hides the thumbnail in a table/img in description
+                const imgMatch = searchContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (imgMatch && imgMatch[1]) {
+                    imageUrl = imgMatch[1];
                 }
             }
 
             // Double check final URL
-            if (isJunkImage(imageUrl)) {
+            if (imageUrl && isJunkImage(imageUrl)) {
                 imageUrl = null;
             }
 
-            // Cleanup URL (strip query params if needed, but usually keep them for CDN images)
+            // Cleanup URL
             if (imageUrl && imageUrl.startsWith('//')) {
                 imageUrl = 'https:' + imageUrl;
             }
@@ -166,7 +164,7 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
                 publishedAt,
                 description: description ? description.substring(0, 500) : null,
                 imageUrl,
-                topics: Array.from(new Set(topics)), // Remove duplicates
+                topics: Array.from(new Set(topics)),
                 priority: source.priority,
             });
         }
@@ -179,6 +177,7 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
 
         return articles;
     } catch (error) {
+        console.error(`❌ Error fetching from ${source.name}:`, error);
         return [];
     }
 }
@@ -242,17 +241,20 @@ export async function fetchAllArticles(): Promise<ParsedArticle[]> {
         if (googleNewsTemplate) {
             dynamicTopics.forEach(topic => {
                 // Refine search query: Replace hyphens with spaces
-                let query = topic.name.toLowerCase().replace(/-/g, ' ');
+                let name = topic.name.toLowerCase().replace(/-/g, ' ');
+                let query = name;
 
-                // Only use strict company searching for verified companies
-                if (topic.isCompany) {
-                    query = `"${query}" news OR "${query}" official`;
+                // Aggressive synonyms for specific targets
+                if (name.includes('formula 1') || name === 'f1') {
+                    query = `"formula 1" OR "formula-1" OR "f1"`;
+                } else if (topic.isCompany) {
+                    query = `"${name}" news OR "${name}" official`;
                 } else {
-                    // For broad topics like 'cinema' or 'formula 1', keep it simple and broad
-                    query = `${query} news`;
+                    // For broad topics like 'cinema', keep it simple and broad
+                    query = `${name} news`;
                 }
 
-                console.log(`🔍 [Intelligence] Searching Google News for: "${query}" (Source: ${topic.name})`);
+                console.log(`🔍 [Intelligence] Searching Google News for: "${query}" (Target: ${topic.name})`);
 
                 sourcesToFetch.push({
                     ...googleNewsTemplate,

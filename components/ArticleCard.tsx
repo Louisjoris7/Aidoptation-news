@@ -47,8 +47,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                         unoptimized
                     />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03]">
-                        <div className="relative w-48 h-20 opacity-20 grayscale invert brightness-0 transition-opacity group-hover:opacity-30">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/[0.04]">
+                        <div className="relative w-96 h-40 opacity-40 grayscale invert brightness-0 transition-all duration-700 group-hover:scale-110 group-hover:opacity-60">
                             <Image
                                 src="/Aidoptation_Logos-01.PNG"
                                 alt="Aidoptation Logo"
