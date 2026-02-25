@@ -55,6 +55,7 @@ function isJunkImage(url: string | null): boolean {
     const junkPatterns = [
         'google.com/logos',
         'google.com/news/badges',
+        'googleusercontent.com', // Added to block banners
         'follow_on_google_news',
         'add_to_google', // This is what the user is seeing
         'google-news-logo',
