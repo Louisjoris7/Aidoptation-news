@@ -43,6 +43,49 @@ function classifyTopics(title: string, description: string | null): string[] {
 }
 
 /**
+ * Filters out common junk images (badges, social icons, tracking pixels)
+ */
+function isJunkImage(url: string | null): boolean {
+    if (!url) return true;
+
+    // Convert to lowercase for comparison
+    const lowUrl = url.toLowerCase();
+
+    // 1. Common marketing/social icons patterns
+    const junkPatterns = [
+        'google.com/logos',
+        'google.com/news/badges',
+        'follow_on_google_news',
+        'add_to_google', // This is what the user is seeing
+        'google-news-logo',
+        'facebook.com/tr', // FB tracking
+        'pixel',
+        'favicon',
+        'logo',
+        'button',
+        'badge',
+        'social-share',
+        'newsletter-signup',
+        'banner-ad',
+        'doubleclick',
+        'ads-by-google',
+        'wp-content/themes', // Often generic theme assets
+        'placeholder'
+    ];
+
+    if (junkPatterns.some(pattern => lowUrl.includes(pattern))) {
+        return true;
+    }
+
+    // 2. Extension check (ignore tiny icons/transparent pixels if possible by naming)
+    if (lowUrl.includes('1x1') || lowUrl.includes('transparent')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Fetch articles from a single RSS source
  */
 async function fetchFromSource(source: typeof RSS_SOURCES[0]): Promise<ParsedArticle[]> {
@@ -82,12 +125,22 @@ async function fetchFromSource(source: typeof RSS_SOURCES[0]): Promise<ParsedArt
                 imageUrl = item['media:thumbnail'].$.url;
             }
             // 4. Fallback to scraping first image from content
-            if (!imageUrl) {
+            if (!imageUrl || isJunkImage(imageUrl)) {
                 const searchContent = (item['content:encoded'] || item.content || item.description || "");
                 const imgMatch = searchContent.match(/<img[^>]+src=["']([^"'>]+)["']/i);
                 if (imgMatch) {
-                    imageUrl = imgMatch[1];
+                    const candidateUrl = imgMatch[1];
+                    if (!isJunkImage(candidateUrl)) {
+                        imageUrl = candidateUrl;
+                    } else {
+                        imageUrl = null; // Don't use the junk image we just found
+                    }
                 }
+            }
+
+            // Double check final URL
+            if (isJunkImage(imageUrl)) {
+                imageUrl = null;
             }
 
             // Cleanup URL (strip query params if needed, but usually keep them for CDN images)
@@ -109,8 +162,6 @@ async function fetchFromSource(source: typeof RSS_SOURCES[0]): Promise<ParsedArt
 
         return articles;
     } catch (error) {
-        // Silent fail for individual sources
-        // console.error(`Error fetching from ${source.name}:`, error);
         return [];
     }
 }
