@@ -2,6 +2,7 @@ import Parser from 'rss-parser';
 import { RSS_SOURCES, TOPIC_KEYWORDS } from './sources';
 import { prisma } from './prisma';
 import { normalizeTopic } from './topics';
+import { JSDOM } from 'jsdom';
 
 const parser = new Parser({
     timeout: 10000,
@@ -167,6 +168,37 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
                 topics: Array.from(new Set(topics)),
                 priority: source.priority,
             });
+        }
+
+        // 5. Deep Extraction Pass: Hunt for missing images in parallel
+        const articlesMissingImages = articles.filter(a => !a.imageUrl);
+        if (articlesMissingImages.length > 0) {
+            console.log(`🕵️ [Hero Hunt] Searching for ${articlesMissingImages.length} missing images for ${source.name}...`);
+
+            // Limit to top 5 most recent to avoid hammering the source
+            const targets = articlesMissingImages.slice(0, 5);
+
+            await Promise.allSettled(targets.map(async (article) => {
+                try {
+                    const res = await fetch(article.url, {
+                        headers: { 'User-Agent': 'Mozilla/5.0' },
+                        signal: AbortSignal.timeout(3000) // 3s timeout
+                    });
+                    if (res.ok) {
+                        const html = await res.text();
+                        const dom = new JSDOM(html);
+                        const doc = dom.window.document;
+                        const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+                            doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+
+                        if (ogImage && !isJunkImage(ogImage)) {
+                            article.imageUrl = ogImage.startsWith('//') ? 'https:' + ogImage : ogImage;
+                        }
+                    }
+                } catch (e) {
+                    // Silently ignore failures in the background hunter
+                }
+            }));
         }
 
         if (articles.length > 0) {
