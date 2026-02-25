@@ -101,6 +101,7 @@ function isJunkImage(url: string | null): boolean {
 async function fetchFromSource(source: any, managedTopicNames: string[] = []): Promise<ParsedArticle[]> {
     try {
         const feed = await parser.parseURL(source.url);
+        console.log(`📊 [Parser] Raw items from "${source.name}": ${feed.items?.length || 0}`);
         const articles: ParsedArticle[] = [];
 
         for (const item of feed.items) {
@@ -240,14 +241,18 @@ export async function fetchAllArticles(): Promise<ParsedArticle[]> {
 
         if (googleNewsTemplate) {
             dynamicTopics.forEach(topic => {
-                // Refine search query: Replace hyphens with spaces for more natural search
-                let query = topic.name.replace(/-/g, ' ');
+                // Refine search query: Replace hyphens with spaces
+                let query = topic.name.toLowerCase().replace(/-/g, ' ');
 
+                // Only use strict company searching for verified companies
                 if (topic.isCompany) {
                     query = `"${query}" news OR "${query}" official`;
+                } else {
+                    // For broad topics like 'cinema' or 'formula 1', keep it simple and broad
+                    query = `${query} news`;
                 }
 
-                console.log(`🔍 Adding dynamic source: Google News for "${query}"`);
+                console.log(`🔍 [Intelligence] Searching Google News for: "${query}" (Source: ${topic.name})`);
 
                 sourcesToFetch.push({
                     ...googleNewsTemplate,
