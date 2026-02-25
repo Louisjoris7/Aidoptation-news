@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import BookmarkButton from './BookmarkButton';
 
 interface Article {
@@ -35,17 +36,18 @@ export default function ArticleCard({ article }: ArticleCardProps) {
     const favicon = getSourceFavicon(article.url);
 
     return (
-        <article className="card glass glass-hover animate-reveal group">
+        <article className="article-card group animate-reveal">
             {article.imageUrl && (
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl">
-                    <img
+                    <Image
                         src={article.imageUrl}
                         alt={article.title}
-                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 ease-out"
-                        loading="lazy"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        unoptimized
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c10]/80 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                        <div className="btn btn-primary text-xs scale-90 -translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                        <div className="btn btn-primary text-xs scale-90 -translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
                             Read Full Story
                         </div>
                     </div>
@@ -54,14 +56,15 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
             <div className="p-4 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-3">
-                    {/* RSS Source with Favicon */}
                     <div className="flex items-center gap-2">
                         {favicon && (
-                            <img
+                            <Image
                                 src={favicon}
                                 alt={article.source}
-                                className="w-4 h-4 rounded-sm opacity-80"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                width={16}
+                                height={16}
+                                className="rounded-sm opacity-80"
+                                unoptimized
                             />
                         )}
                         <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10 text-primary uppercase tracking-widest">

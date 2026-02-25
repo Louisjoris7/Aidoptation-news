@@ -2,8 +2,11 @@ import { prisma } from '@/lib/prisma';
 import { extractArticle } from '@/lib/article-extractor';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import VisitTracker from '@/components/VisitTracker';
+
+export const dynamic = 'force-dynamic';
 
 interface ArticlePageProps {
     params: {
@@ -84,10 +87,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
                         {article.imageUrl && (
                             <div className="relative aspect-video w-full overflow-hidden rounded-2xl mb-12 shadow-2xl border border-border/50">
-                                <img
+                                <Image
                                     src={article.imageUrl}
                                     alt={article.title}
-                                    className="object-cover w-full h-full"
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                    priority
                                 />
                             </div>
                         )}
