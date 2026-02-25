@@ -37,8 +37,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
     return (
         <article className="article-card group animate-reveal">
-            {article.imageUrl && (
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-white/[0.02] border border-white/5">
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-white/[0.02] border border-white/5">
+                {article.imageUrl ? (
                     <Image
                         src={article.imageUrl}
                         alt={article.title}
@@ -46,11 +46,22 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                         className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         unoptimized
                     />
-                    {/* Visual Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-60 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 via-transparent to-background/50">
+                        <div className="relative w-32 h-10 opacity-[0.05] grayscale invert transition-opacity group-hover:opacity-10">
+                            <Image
+                                src="/Aidoptation_Logos-01.PNG"
+                                alt="Aidoptation Logo"
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
                     </div>
+                )}
+                {/* Visual Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-60 group-hover:opacity-100 transition-opacity flex items-end p-6">
                 </div>
-            )}
+            </div>
 
             <div className="p-4 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-3">

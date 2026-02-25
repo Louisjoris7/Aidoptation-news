@@ -170,6 +170,12 @@ async function fetchFromSource(source: any, managedTopicNames: string[] = []): P
             });
         }
 
+        if (articles.length > 0) {
+            console.log(`✅ ${source.name}: Found ${articles.length} articles`);
+        } else {
+            console.log(`⚠️ ${source.name}: No recent articles found`);
+        }
+
         return articles;
     } catch (error) {
         return [];
@@ -234,11 +240,14 @@ export async function fetchAllArticles(): Promise<ParsedArticle[]> {
 
         if (googleNewsTemplate) {
             dynamicTopics.forEach(topic => {
-                // Refine search query for companies
-                let query = topic.name;
+                // Refine search query: Replace hyphens with spaces for more natural search
+                let query = topic.name.replace(/-/g, ' ');
+
                 if (topic.isCompany) {
-                    query = `"${topic.name}" news OR "${topic.name}" official`;
+                    query = `"${query}" news OR "${query}" official`;
                 }
+
+                console.log(`🔍 Adding dynamic source: Google News for "${query}"`);
 
                 sourcesToFetch.push({
                     ...googleNewsTemplate,
