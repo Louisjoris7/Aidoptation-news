@@ -24,13 +24,22 @@ export interface ParsedArticle {
 /**
  * Classify article into topics based on title and description
  */
-function classifyTopics(title: string, description: string | null): string[] {
+function classifyTopics(title: string, description: string | null, managedTopics: string[] = []): string[] {
     const text = `${title} ${description || ''}`.toLowerCase();
     const topics: string[] = [];
 
+    // 1. Matches from hardcoded TOPIC_KEYWORDS
     for (const [topic, keywords] of Object.entries(TOPIC_KEYWORDS)) {
         if (keywords.some(keyword => text.includes(keyword.toLowerCase()))) {
             topics.push(topic);
+        }
+    }
+
+    // 2. Matches from dynamic managed topics (ManagedTopic.name)
+    for (const managedTopic of managedTopics) {
+        const keyword = managedTopic.toLowerCase().replace(/-/g, ' ');
+        if (text.includes(keyword) && !topics.includes(managedTopic)) {
+            topics.push(managedTopic);
         }
     }
 
@@ -89,7 +98,7 @@ function isJunkImage(url: string | null): boolean {
 /**
  * Fetch articles from a single RSS source
  */
-async function fetchFromSource(source: typeof RSS_SOURCES[0]): Promise<ParsedArticle[]> {
+async function fetchFromSource(source: any, managedTopicNames: string[] = []): Promise<ParsedArticle[]> {
     try {
         const feed = await parser.parseURL(source.url);
         const articles: ParsedArticle[] = [];
@@ -107,7 +116,7 @@ async function fetchFromSource(source: typeof RSS_SOURCES[0]): Promise<ParsedArt
             if (publishedAt < sevenDaysAgo) continue;
 
             // Classify topics
-            const classifiedTopics = classifyTopics(title, description);
+            const classifiedTopics = classifyTopics(title, description, managedTopicNames);
             const topics = [...source.defaultTopics, ...classifiedTopics];
 
             // Extract image URL - more robust logic
@@ -244,8 +253,9 @@ export async function fetchAllArticles(): Promise<ParsedArticle[]> {
     console.log(`Fetching from ${sourcesToFetch.length} total sources...`);
 
     // 4. Fetch all in parallel
+    const managedTopicNames = allManagedTopics.map(t => t.name);
     const results = await Promise.allSettled(
-        sourcesToFetch.map(source => fetchFromSource(source))
+        sourcesToFetch.map(source => fetchFromSource(source, managedTopicNames))
     );
 
     const allArticles: ParsedArticle[] = [];

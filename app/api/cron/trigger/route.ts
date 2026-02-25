@@ -1,20 +1,32 @@
 import { NextResponse } from 'next/server';
-
-export const dynamic = 'force-dynamic';
 import { fetchAllArticles } from '@/lib/rss-fetcher';
 import { prisma } from '@/lib/prisma';
+import { deduplicateArticles } from '@/lib/deduplicator';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST() {
     try {
-        console.log('Manual fetch triggered from Admin...');
+        console.log('🔄 Manual fetch triggered from Admin...');
+
+        // 1. Fetch from unified engine
         const articles = await fetchAllArticles();
 
-        // Save to database (copy-pasted from cron job logic for consistency)
-        for (const article of articles) {
+        // 2. Deduplicate
+        const { uniqueArticles } = deduplicateArticles(articles);
+
+        // 3. Save/Update in DB
+        let updatedCount = 0;
+        for (const article of uniqueArticles) {
             await prisma.article.upsert({
                 where: { url: article.url },
                 update: {
+                    title: article.title,
+                    description: article.description,
+                    publishedAt: article.publishedAt,
                     imageUrl: article.imageUrl,
+                    topics: JSON.stringify(article.topics), // Refresh tags!
                 },
                 create: {
                     title: article.title,
@@ -22,19 +34,20 @@ export async function POST() {
                     source: article.source,
                     publishedAt: article.publishedAt,
                     description: article.description,
-                    topics: JSON.stringify(article.topics),
                     imageUrl: article.imageUrl,
+                    topics: JSON.stringify(article.topics),
                 },
             });
+            updatedCount++;
         }
 
         return NextResponse.json({
             success: true,
-            count: articles.length,
-            message: `Successfully updated ${articles.length} articles.`
+            count: updatedCount,
+            message: `Successfully synchronized ${updatedCount} articles.`
         });
     } catch (error) {
-        console.error('Manual fetch failed:', error);
-        return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
+        console.error('❌ Manual fetch failed:', error);
+        return NextResponse.json({ error: 'Failed to synchronize intelligence' }, { status: 500 });
     }
 }

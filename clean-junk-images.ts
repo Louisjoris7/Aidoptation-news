@@ -47,15 +47,12 @@ async function main() {
         const url = article.imageUrl as string;
         const lowUrl = url.toLowerCase();
 
-        console.log(`🧐 Scanning: "${article.title}"`);
-        console.log(`   URL: ${url}`);
-
         // Broad search for banners
         const isJunk = junkPatterns.some(pattern => lowUrl.includes(pattern)) ||
             (lowUrl.includes('google') && (lowUrl.includes('news') || lowUrl.includes('banner') || lowUrl.includes('badge')));
 
         if (isJunk) {
-            console.log(`   🗑️ MATCH! Removing junk banner.`);
+            console.log(`🗑️ MATCH! Removing junk banner from: "${article.title}"`);
 
             await prisma.article.update({
                 where: { id: article.id },
@@ -66,10 +63,19 @@ async function main() {
     }
 
     console.log(`\n✅ Finished! Successfully removed ${cleanedCount} junk images.`);
-    if (cleanedCount === 0) {
-        console.log('\n❌ I still found 0 junk images. This means the images you see have a URL that doesn\'t look like our filters.');
-        console.log('👉 To fix this, please run the script again after uncommenting the "DEBUG" line in the code to show all URLs.');
-    }
+
+    // FINAL CHECK: Show me what articles still HAVE images
+    const remaining = await prisma.article.findMany({
+        where: { imageUrl: { not: null } },
+        orderBy: { publishedAt: 'desc' },
+        take: 10
+    });
+
+    console.log(`\n📸 PREVIEW: Here are the latest 10 articles that still HAVE images:`);
+    remaining.forEach(article => {
+        console.log(`🖼️ "${article.title}"`);
+        console.log(`   URL: ${article.imageUrl}`);
+    });
 }
 
 main()

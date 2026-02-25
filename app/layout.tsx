@@ -16,6 +16,8 @@ export const metadata: Metadata = {
     }
 };
 
+import RefreshTrigger from "@/components/RefreshTrigger";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -41,6 +43,7 @@ export default function RootLayout({
                 </div>
 
                 {children}
+                <RefreshTrigger />
             </body>
         </html>
     );
