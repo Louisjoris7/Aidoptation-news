@@ -27,6 +27,10 @@ interface Article {
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
+    if (!params?.id) {
+        notFound();
+    }
+
     const article = (await prisma.article.findUnique({
         where: { id: params.id },
     })) as Article | null;
