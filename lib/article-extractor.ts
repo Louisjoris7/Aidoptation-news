@@ -12,14 +12,31 @@ export interface ExtractedArticle {
 }
 
 /**
- * Specifically hunts for a "Hero" image in the HTML head (using meta tags)
+ * Filters out common junk images (badges, social icons, tracking pixels)
+ */
+function isJunk(url: string | null): boolean {
+    if (!url) return true;
+    const lowUrl = url.toLowerCase();
+    const junkPatterns = [
+        'google.com/logos', 'google.com/news/badges', 'googleusercontent.com',
+        'follow_on_google_news', 'add_to_google', 'google-news-logo',
+        'facebook.com/tr', 'pixel', 'favicon', 'logo', 'button', 'badge',
+        'social-share', 'newsletter-signup', 'banner-ad', 'doubleclick',
+        'ads-by-google', 'wp-content/themes', 'placeholder', 'avatar',
+        '1x1', 'transparent', 'spacer', 'icon'
+    ];
+    return junkPatterns.some(pattern => lowUrl.includes(pattern));
+}
+
+/**
+ * Specifically hunts for a "Hero" image in the HTML head or body
  */
 export async function getHeroImage(html: string, url: string): Promise<string | null> {
     try {
         const dom = new JSDOM(html, { url });
         const doc = dom.window.document;
 
-        // 1. Check Meta-tag priority list
+        // 1. Check Meta-tag priority list (The Head Hunter)
         const selectors = [
             'meta[property="og:image"]',
             'meta[name="twitter:image"]',
@@ -32,12 +49,30 @@ export async function getHeroImage(html: string, url: string): Promise<string | 
             const el = doc.querySelector(selector);
             let content = el?.getAttribute('content') || el?.getAttribute('href');
 
-            if (content) {
-                // Resolve relative URLs (e.g. /img/hero.jpg -> https://example.com/img/hero.jpg)
+            if (content && !isJunk(content)) {
                 try {
                     return new URL(content, url).href;
                 } catch (e) {
                     return content;
+                }
+            }
+        }
+
+        // 2. Fallback: Scan the Body (The Body Scan)
+        // Look for the first meaningful image in the body
+        const bodyImages = Array.from(doc.querySelectorAll('article img, main img, .content img, #content img, img'));
+        for (const img of bodyImages) {
+            const src = img.getAttribute('src') || img.getAttribute('data-src');
+            if (src && !isJunk(src)) {
+                // Heuristic: Ignore tiny images (icons) if dimensions are known
+                const width = parseInt(img.getAttribute('width') || '0');
+                const height = parseInt(img.getAttribute('height') || '0');
+                if ((width > 0 && width < 100) || (height > 0 && height < 100)) continue;
+
+                try {
+                    return new URL(src, url).href;
+                } catch (e) {
+                    return src;
                 }
             }
         }
